@@ -70,7 +70,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.post("/create", async (req, res) => {
+app.post("/api/create", async (req, res) => {
   const { description = "Package created" } = req.body || {};
   const trackingId = generateTrackingId();
   const now = new Date().toISOString();
@@ -103,7 +103,7 @@ app.post("/create", async (req, res) => {
   }
 });
 
-app.get("/track/:id", async (req, res) => {
+app.get("/api/track/:id", async (req, res) => {
   try {
     const pkg = await dbGet(
       "SELECT trackingId, status, description FROM packages WHERE trackingId = ?",
@@ -125,7 +125,15 @@ app.get("/track/:id", async (req, res) => {
   }
 });
 
-app.post("/update", async (req, res) => {
+app.get("/view/:id", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/track/:id", (req, res) => {
+  res.redirect(`/view/${encodeURIComponent(req.params.id)}`);
+});
+
+app.post("/api/update", async (req, res) => {
   const { trackingId, location, status } = req.body || {};
   if (!trackingId || !location || !status) {
     return res.status(400).json({ error: "trackingId, location, and status are required" });
@@ -165,6 +173,11 @@ app.post("/update", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {

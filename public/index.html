@@ -73,6 +73,63 @@
       white-space: pre-wrap;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
+    .track-result {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+    .track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .track-header strong {
+      font-size: 1rem;
+      color: #111827;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: white;
+      background: #2563eb;
+    }
+    .package-description {
+      margin: 0 0 12px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .history-item {
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .history-item strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+    .track-result img {
+      max-width: 100%;
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
     .error {
       border-color: #fca5a5;
       background: #fee2e2;
@@ -102,7 +159,7 @@
         <input id="track-id" placeholder="PKG-XXXXXXX" required />
         <button type="submit">Track</button>
       </form>
-      <p style="margin-top: 12px; color: #6b7280;">You can also share a direct tracking link like <code>/?trackingId=PKG-XXXXXXX</code>.</p>
+      <p style="margin-top: 12px; color: #6b7280;">You can also share a direct tracking link like <code>/view/PKG-XXXXXXX</code> or <code>/?trackingId=PKG-XXXXXXX</code>.</p>
       <div id="track-response" class="response" hidden></div>
     </section>
 
@@ -134,6 +191,34 @@
       element.classList.toggle("error", isError);
     };
 
+    const renderTrackResult = (element, data) => {
+      element.hidden = false;
+      element.classList.remove("error");
+      const historyHtml = data.history
+        .map(
+          (item) => `
+            <li class="history-item">
+              <strong>${item.status}</strong>
+              <div><strong>Location:</strong> ${item.location}</div>
+              <div><strong>Date:</strong> ${new Date(item.date).toLocaleString()}</div>
+            </li>`
+        )
+        .join("");
+
+      element.innerHTML = `
+        <div class="track-result">
+          <div class="track-header">
+            <strong>Tracking ID: ${data.trackingId}</strong>
+            <span class="status-pill">${data.status}</span>
+          </div>
+          <p class="package-description">${data.description}</p>
+          <img src="https://via.placeholder.com/860x220?text=Package+Tracking" alt="Tracking illustration" />
+          <h3>History</h3>
+          <ul class="history-list">${historyHtml}</ul>
+        </div>
+      `;
+    };
+
     const handleSubmit = async (form, url, body, responseElement) => {
       try {
         const res = await fetch(url, {
@@ -157,7 +242,7 @@
       const description = document.getElementById("create-description").value.trim();
       handleSubmit(
         event.target,
-        "/create",
+        "/api/create",
         { description },
         document.getElementById("create-response")
       );
@@ -171,13 +256,13 @@
       }
 
       try {
-        const res = await fetch(`/track/${encodeURIComponent(trackingId)}`);
+        const res = await fetch(`/api/track/${encodeURIComponent(trackingId)}`);
         const data = await res.json();
         if (!res.ok) {
           showResponse(responseElement, data.error || JSON.stringify(data, null, 2), true);
           return;
         }
-        showResponse(responseElement, data);
+        renderTrackResult(responseElement, data);
       } catch (error) {
         showResponse(responseElement, error.message, true);
       }
@@ -203,14 +288,17 @@
 
       handleSubmit(
         event.target,
-        "/update",
+        "/api/update",
         { trackingId, location, status },
         responseElement
       );
     });
 
     const searchParams = new URLSearchParams(window.location.search);
-    const initialTrackingId = searchParams.get("trackingId") || searchParams.get("trackingid") || searchParams.get("trackingID") || searchParams.get("id");
+    const byQuery = searchParams.get("trackingId") || searchParams.get("trackingid") || searchParams.get("trackingID") || searchParams.get("id");
+    const pathMatch = window.location.pathname.match(/^\/view\/(PKG-[A-Z0-9]+)$/i);
+    const initialTrackingId = byQuery || (pathMatch ? pathMatch[1] : null);
+
     if (initialTrackingId) {
       const createSection = document.querySelector(".page > section:first-of-type");
       const updateSection = document.querySelector(".page > section:last-of-type");
