@@ -14,6 +14,7 @@ Then use:
 - `POST http://localhost:3000/create` to create a package
 - `POST http://localhost:3000/update` to update status
 - `GET http://localhost:3000/track/<trackingId>` to check package status
+- Use `http://localhost:3000/?trackingId=PKG-XXXXXXX` to open the website and show tracking results automatically
 
 ## Deploying online
 

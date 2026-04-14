@@ -102,6 +102,7 @@
         <input id="track-id" placeholder="PKG-XXXXXXX" required />
         <button type="submit">Track</button>
       </form>
+      <p style="margin-top: 12px; color: #6b7280;">You can also share a direct tracking link like <code>/?trackingId=PKG-XXXXXXX</code>.</p>
       <div id="track-response" class="response" hidden></div>
     </section>
 
@@ -162,9 +163,7 @@
       );
     });
 
-    document.getElementById("track-form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const trackingId = document.getElementById("track-id").value.trim();
+    const trackPackage = async (trackingId) => {
       const responseElement = document.getElementById("track-response");
       if (!trackingId) {
         showResponse(responseElement, "Tracking ID is required.", true);
@@ -182,6 +181,12 @@
       } catch (error) {
         showResponse(responseElement, error.message, true);
       }
+    };
+
+    document.getElementById("track-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const trackingId = document.getElementById("track-id").value.trim();
+      trackPackage(trackingId);
     });
 
     document.getElementById("update-form").addEventListener("submit", (event) => {
@@ -203,6 +208,14 @@
         responseElement
       );
     });
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const initialTrackingId = searchParams.get("trackingId") || searchParams.get("trackingid") || searchParams.get("trackingID") || searchParams.get("id");
+    if (initialTrackingId) {
+      const trackInput = document.getElementById("track-id");
+      trackInput.value = initialTrackingId;
+      trackPackage(initialTrackingId);
+    }
   </script>
 </body>
 </html>
