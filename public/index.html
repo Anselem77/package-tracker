@@ -212,7 +212,15 @@
     const searchParams = new URLSearchParams(window.location.search);
     const initialTrackingId = searchParams.get("trackingId") || searchParams.get("trackingid") || searchParams.get("trackingID") || searchParams.get("id");
     if (initialTrackingId) {
+      const createSection = document.querySelector(".page > section:first-of-type");
+      const updateSection = document.querySelector(".page > section:last-of-type");
       const trackInput = document.getElementById("track-id");
+      const trackSection = document.querySelector(".page > section:nth-of-type(2)");
+
+      if (createSection) createSection.style.display = "none";
+      if (updateSection) updateSection.style.display = "none";
+      if (trackSection) trackSection.scrollIntoView({ behavior: "smooth" });
+
       trackInput.value = initialTrackingId;
       trackPackage(initialTrackingId);
     }
